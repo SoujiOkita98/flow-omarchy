@@ -7,6 +7,11 @@ language and keeps mixed languages as you spoke them.
 > **Based on [FreeFlow](https://github.com/zachlatta/freeflow) by Zach Latta.**
 > Same pipeline, same cleanup prompt, rebuilt for Linux.
 
+> [!NOTE]
+> **Only tested on my own Omarchy machine:** one laptop with Omarchy 4.5,
+> Hyprland 0.56, PipeWire 1.6 and Groq. Other setups may need fixes. Issues
+> and pull requests are welcome.
+
 ## Why this exists
 
 I built this for myself. I use [FreeFlow](https://github.com/zachlatta/freeflow)

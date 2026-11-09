@@ -5,6 +5,10 @@ steps in order, run each command yourself, and tell the user in plain words
 what you did. Flow is based on FreeFlow by Zach Latta; keep that credit
 wherever you describe it.
 
+Flow has only been tested on its author's Omarchy machine (Omarchy 4.5,
+Hyprland 0.56, PipeWire 1.6, Groq). Tell the user this before installing.
+If something fails on their setup, say so plainly rather than guessing.
+
 ## Set Flow up for a user
 
 1. **Check first.** If `command -v flow-omarchy && flow-omarchy doctor` prints
