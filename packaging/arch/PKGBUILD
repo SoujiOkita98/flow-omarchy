@@ -1,6 +1,6 @@
 # Maintainer: SoujiOkita98 <https://github.com/SoujiOkita98>
 pkgname=flow-omarchy
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="AI dictation for Wayland: talk, and cleaned-up text is pasted into the focused window (based on FreeFlow by Zach Latta)"
 arch=('any')

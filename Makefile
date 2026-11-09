@@ -6,6 +6,8 @@ DESTDIR ?=
 install:
 	install -Dm755 bin/flow-omarchy $(DESTDIR)$(PREFIX)/bin/flow-omarchy
 	install -Dm644 share/prompts/cleanup.txt $(DESTDIR)$(PREFIX)/share/flow-omarchy/prompts/cleanup.txt
+	install -Dm644 -t $(DESTDIR)$(PREFIX)/share/flow-omarchy/omarchy-plugin omarchy/plugin/manifest.json omarchy/plugin/Overlay.qml
+	install -Dm644 -t $(DESTDIR)$(PREFIX)/share/flow-omarchy/omarchy-plugin/i18n omarchy/plugin/i18n/*.json
 	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/flow-omarchy/LICENSE
 
 install-omarchy: install

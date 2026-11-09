@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "flow.overlay",
+  "name": "Flow dictation",
+  "version": "0.2.0",
+  "description": "Recording pill for Flow for Omarchy: live mic waveform, timer and transcription status.",
+  "kinds": [
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "Overlay.qml"
+  }
+}

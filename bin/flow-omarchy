@@ -11,7 +11,7 @@
 
 set -o pipefail
 
-VERSION="0.1.0"
+VERSION="0.2.0"
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}/flow-omarchy"
 state_home="${XDG_STATE_HOME:-$HOME/.local/state}/flow-omarchy"
@@ -69,6 +69,7 @@ load_config() {
   FLOW_TIMEOUT=20
   FLOW_MAX_SECONDS=600
   FLOW_NOTIFY=1
+  FLOW_OVERLAY=1
   FLOW_API_KEY="${GROQ_API_KEY:-}"
 
   if [[ -f $config_file ]]; then
@@ -96,8 +97,34 @@ notify() {
   id=$(notify-send "${args[@]}" "$summary" "$body" 2>/dev/null) && printf '%s\n' "$id" > "$id_file"
 }
 
+# Shows progress in the Omarchy shell pill (omarchy/plugin) when it is
+# installed, otherwise as desktop notifications.
+ui() {
+  local state=$1 message=${2:-}
+  [[ $FLOW_NOTIFY == 1 ]] || return 0
+
+  if [[ $FLOW_OVERLAY == 1 ]] && command -v omarchy-shell >/dev/null \
+    && [[ $(omarchy-shell flow ping 2>/dev/null) == ok ]]; then
+    case $state in
+      recording | processing) omarchy-shell -q flow "$state" ;;
+      pasted | cancelled) omarchy-shell -q flow hide ;;
+      info | error) omarchy-shell -q flow "$state" "$message" ;;
+    esac
+    return 0
+  fi
+
+  case $state in
+    recording) notify low "Listening…" "" 0 ;;
+    processing) notify low "Transcribing…" "" 0 ;;
+    pasted) notify low "Pasted" "" 800 ;;
+    cancelled) notify low "Dictation cancelled" "" 1500 ;;
+    info) notify low "$message" "" 2000 ;;
+    error) notify critical "Flow" "$message" 8000 ;;
+  esac
+}
+
 fail() {
-  notify critical "Flow" "$1" 8000
+  ui error "$1"
   echo "flow-omarchy: $1" >&2
   exit 1
 }
@@ -166,7 +193,7 @@ start() {
   printf '%s\n' "$!" > "$runtime_dir/recorder.pid"
   printf '%s\n' "$session" > "$runtime_dir/current-session"
 
-  notify low "Listening…" "" 0
+  ui recording
 }
 
 stop_recorder() {
@@ -190,6 +217,7 @@ stop() {
   session=$(stop_recorder) || return 0
   [[ -n $session && -d $session ]] || return 0
   touch "$session/processing"
+  ui processing
   # Return quickly so Omarchy's dictation lock is released while the
   # provider works; the paste happens from this detached process.
   setsid "$self" _process "$session" </dev/null >/dev/null 2>&1 &
@@ -199,7 +227,7 @@ cancel() {
   local session
   session=$(stop_recorder) || return 0
   [[ -n $session && $session == "$runtime_dir"/session-* ]] && rm -rf "$session"
-  notify low "Dictation cancelled" "" 1500
+  ui cancelled
 }
 
 toggle() {
@@ -446,15 +474,14 @@ process() {
   bytes=$(stat -c %s "$session/audio.wav" 2>/dev/null || echo 0)
   # Under ~0.3s of 16 kHz mono 16-bit audio: an accidental tap.
   if (( bytes < 9600 )); then
-    notify low "Too short, nothing recorded" "" 1500
+    ui info "Too short, nothing recorded"
     exit 0
   fi
 
-  notify low "Transcribing…" "" 0
   transcript=$(transcribe "$session/audio.wav" 2>"$session/error") || fail "$(< "$session/error")"
   transcript=$(perl -0pe 's/\A\s+//; s/\s+\z//' <<< "$transcript")
   if [[ -z $transcript ]]; then
-    notify low "No speech detected" "" 1500
+    ui info "No speech detected"
     exit 0
   fi
 
@@ -464,18 +491,18 @@ process() {
     context=$(context_summary "$window_json")
     if ! text=$(cleanup "$transcript" "$context" 2>"$session/error"); then
       text=$transcript
-      notify normal "Cleanup failed, pasted the raw transcript" "$(head -c 200 "$session/error")" 5000
+      ui info "Cleanup failed, pasted the raw transcript"
     fi
   fi
 
   if [[ -z $text ]]; then
-    notify low "Nothing to paste" "" 1500
+    ui info "Nothing to paste"
     exit 0
   fi
 
   remember_last "$text"
   if paste_text "$text"; then
-    notify low "Pasted" "" 800
+    ui pasted
   else
     fail "Could not paste. Run: flow-omarchy paste-again"
   fi
@@ -504,6 +531,8 @@ FLOW_FALLBACK_MODEL="qwen/qwen3.8-27b"
 
 # 1 = clean up with the LLM, 0 = paste exactly what was transcribed
 FLOW_CLEANUP=1
+# 1 = show progress in the Omarchy shell pill, 0 = desktop notifications
+FLOW_OVERLAY=1
 # 1 = send the focused app's name and window title as spelling context
 FLOW_CONTEXT=1
 # Dictation language code (e.g. en, de, zh); empty = auto-detect, mixed languages are kept
@@ -544,6 +573,15 @@ EOF
   fi
 }
 
+# Where the Omarchy shell plugin lives: installed copy, or the source tree.
+plugin_path() {
+  if [[ -d $share_dir/omarchy-plugin ]]; then
+    printf '%s\n' "$share_dir/omarchy-plugin"
+  else
+    printf '%s\n' "$prefix/omarchy/plugin"
+  fi
+}
+
 edit_config() {
   [[ -f $config_file ]] || { echo "Run: flow-omarchy setup" >&2; exit 1; }
   exec "${EDITOR:-nano}" "$config_file"
@@ -562,6 +600,7 @@ case "${1:-}" in
   setup) setup ;;
   config) edit_config ;;
   paste-again) paste_again ;;
+  plugin-path) plugin_path ;;
   version | --version) echo "flow-omarchy $VERSION" ;;
   _process) process "$2" ;;
   help | -h | --help | "") usage ;;

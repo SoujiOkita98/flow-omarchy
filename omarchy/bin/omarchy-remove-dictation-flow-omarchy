@@ -9,6 +9,12 @@ if omarchy-cmd-present flow-omarchy; then
   echo "Uninstall Flow for Omarchy to remove dictation."
 
   flow-omarchy cancel >/dev/null 2>&1 || true
+  omarchy-shell -q shell setPluginEnabled flow.overlay false
+  plugin_link="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins/flow-overlay"
+  if [[ -L $plugin_link ]]; then
+    unlink "$plugin_link"
+  fi
+  omarchy-shell -q shell rescanPlugins
   omarchy-pkg-drop flow-omarchy
   # The config holds the provider API key, so don't leave it behind.
   rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/flow-omarchy"

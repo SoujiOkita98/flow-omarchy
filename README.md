@@ -47,6 +47,11 @@ makes Flow your dictation backend. Then:
 - hold **Right Alt** to talk (push-to-talk), or
 - press **Alt + Space** to start and again to stop.
 
+While you talk, a small pill at the bottom of the screen shows a live
+waveform of your voice and a timer, then "Transcribing" until the text is
+pasted. It is an Omarchy shell plugin (`omarchy/plugin`), follows your theme,
+and never takes focus from the window you are typing into.
+
 To go back to Voxtype: `omarchy-dictation-use voxtype && omarchy-restart-hyprctl`.
 
 This is an early version (0.1). It covers dictation and cleanup; FreeFlow's Edit
@@ -87,6 +92,7 @@ use `hyprctl`; elsewhere set `FLOW_OUTPUT="type"` (needs `wtype`) or
 | `FLOW_TRANSCRIPTION_MODEL` | `whisper-large-v3` | |
 | `FLOW_MODEL` / `FLOW_FALLBACK_MODEL` | `openai/gpt-oss-20b` / `qwen/qwen3.8-27b` | Cleanup models |
 | `FLOW_CLEANUP` | `1` | `0` pastes the raw transcript |
+| `FLOW_OVERLAY` | `1` | Show progress in the Omarchy shell pill; `0` uses desktop notifications |
 | `FLOW_CONTEXT` | `1` | Send the focused app's name and window title as a spelling hint |
 | `FLOW_LANGUAGE` | auto | Dictation language code, e.g. `de`, `zh`; empty auto-detects and keeps mixed languages |
 | `FLOW_OUTPUT_LANGUAGE` | none | Translate the result into this language, e.g. `English` |

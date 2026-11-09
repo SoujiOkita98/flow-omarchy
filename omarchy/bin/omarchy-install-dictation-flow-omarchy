@@ -25,6 +25,13 @@ fi
 # Enter keeps an existing key, so re-running the installer is safe.
 flow-omarchy setup
 
+# The recording pill (live waveform, timer, status) for the Omarchy shell.
+plugins_dir="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins"
+mkdir -p "$plugins_dir"
+ln -sfn "$(flow-omarchy plugin-path)" "$plugins_dir/flow-overlay"
+omarchy-shell -q shell rescanPlugins
+omarchy-shell -q shell setPluginEnabled flow.overlay true
+
 omarchy-dictation-use flow-omarchy
 omarchy-restart-hyprctl
 omarchy-notification-send -g  "$(text dictation.flowReady "Flow Dictation Ready")" "$(omarchy-i18n dictation.hint)" -t 10000
