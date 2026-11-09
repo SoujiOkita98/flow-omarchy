@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# omarchy:summary=Record dictation using Flow for Omarchy
+# omarchy:args=<start|stop|toggle>
+
+case "${1:-}" in
+  start|toggle) flow-omarchy "$1" ;;
+  stop)
+    if omarchy-cmd-missing flow-omarchy; then
+      exit 0
+    else
+      flow-omarchy stop
+    fi
+    ;;
+  *) echo "Usage: omarchy dictation flow-omarchy <start|stop|toggle>" >&2; exit 1 ;;
+esac

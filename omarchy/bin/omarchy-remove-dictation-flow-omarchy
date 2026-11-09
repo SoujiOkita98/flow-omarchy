@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# omarchy:summary=Remove Flow for Omarchy dictation and its configuration
+# omarchy:requires-sudo=true
+
+set -e
+
+if omarchy-cmd-present flow-omarchy; then
+  echo "Uninstall Flow for Omarchy to remove dictation."
+
+  flow-omarchy cancel >/dev/null 2>&1 || true
+  omarchy-pkg-drop flow-omarchy
+  # The config holds the provider API key, so don't leave it behind.
+  rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/flow-omarchy"
+  rm -rf "${XDG_STATE_HOME:-$HOME/.local/state}/flow-omarchy"
+  backend_config="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/defaults/dictation"
+  if [[ -f $backend_config && $(< "$backend_config") == "flow-omarchy" ]]; then
+    rm "$backend_config"
+  fi
+  omarchy-restart-hyprctl
+else
+  echo "Flow for Omarchy was not installed."
+fi

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# omarchy:summary=Install and configure Flow for Omarchy dictation
+# omarchy:requires-sudo=true
+
+set -e
+
+# Falls back to English until Omarchy ships these strings.
+text() {
+  local value
+  value=$(omarchy-i18n "$1")
+  [[ $value == "$1" ]] && value=$2
+  printf '%s' "$value"
+}
+
+if omarchy-cmd-missing flow-omarchy; then
+  if gum confirm --affirmative "$(omarchy-i18n common.yes)" --negative "$(omarchy-i18n common.no)" "$(text dictation.installFlow "Install Flow for Omarchy? It uses a cloud provider (a free Groq API key).")"; then
+    omarchy-pkg-add wtype flow-omarchy
+  else
+    exit 0
+  fi
+fi
+
+# Asks for an API key (a free Groq key by default) and checks it works.
+# Enter keeps an existing key, so re-running the installer is safe.
+flow-omarchy setup
+
+omarchy-dictation-use flow-omarchy
+omarchy-restart-hyprctl
+omarchy-notification-send -g  "$(text dictation.flowReady "Flow Dictation Ready")" "$(omarchy-i18n dictation.hint)" -t 10000
