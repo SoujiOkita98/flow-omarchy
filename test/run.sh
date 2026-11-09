@@ -89,6 +89,7 @@ check "output language asks for a translation" "$(jq -r '.body.messages[0].conte
 sed -i 's/^FLOW_API_KEY=.*/FLOW_API_KEY=""/' "$XDG_CONFIG_HOME/flow-omarchy/config"
 echo "test-key" | "$root/bin/flow-omarchy" setup >/dev/null 2>&1; status=$?
 check "setup saves and verifies the key" "$status:$(grep -c '^FLOW_API_KEY="test-key"' "$XDG_CONFIG_HOME/flow-omarchy/config")" "0:1"
+check "doctor confirms the key" "$("$root/bin/flow-omarchy" doctor | grep -c '^ok   API key accepted')" "1"
 check "config is private" "$(stat -c %a "$XDG_CONFIG_HOME/flow-omarchy/config")" "600"
 echo "wrong-key" | "$root/bin/flow-omarchy" setup >/dev/null 2>&1; status=$?
 check "setup rejects a bad key" "$status" "1"

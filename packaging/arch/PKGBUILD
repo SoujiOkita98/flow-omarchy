@@ -1,14 +1,13 @@
 # Maintainer: SoujiOkita98 <https://github.com/SoujiOkita98>
 pkgname=flow-omarchy
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
-pkgdesc="AI dictation for Wayland: talk, and cleaned-up text is pasted into the focused window (based on FreeFlow by Zach Latta)"
+pkgdesc="Small, agent-first AI dictation for Omarchy (based on FreeFlow by Zach Latta)"
 arch=('any')
 url="https://github.com/SoujiOkita98/flow-omarchy"
 license=('MIT')
-depends=('bash' 'curl' 'jq' 'perl' 'pipewire' 'wl-clipboard' 'libnotify')
-optdepends=('hyprland: paste into the focused window and send window context'
-            'wtype: FLOW_OUTPUT="type"')
+depends=('bash' 'curl' 'jq' 'perl' 'pipewire' 'wl-clipboard' 'hyprland')
+optdepends=('libnotify: notifications outside the Omarchy shell')
 checkdepends=('python' 'ffmpeg')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')

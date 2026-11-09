@@ -1,20 +1,17 @@
 PREFIX ?= /usr/local
 DESTDIR ?=
+BIN := flow-omarchy omarchy-dictation-flow-omarchy omarchy-install-dictation-flow-omarchy omarchy-remove-dictation-flow-omarchy
 
-.PHONY: install install-omarchy uninstall check
+.PHONY: install uninstall check
 
 install:
-	install -Dm755 bin/flow-omarchy $(DESTDIR)$(PREFIX)/bin/flow-omarchy
-	install -Dm644 share/prompts/cleanup.txt $(DESTDIR)$(PREFIX)/share/flow-omarchy/prompts/cleanup.txt
-	install -Dm644 -t $(DESTDIR)$(PREFIX)/share/flow-omarchy/omarchy-plugin omarchy/plugin/manifest.json omarchy/plugin/Overlay.qml
-	install -Dm644 -t $(DESTDIR)$(PREFIX)/share/flow-omarchy/omarchy-plugin/i18n omarchy/plugin/i18n/*.json
+	install -Dm755 -t $(DESTDIR)$(PREFIX)/bin $(addprefix bin/,$(BIN))
+	mkdir -p $(DESTDIR)$(PREFIX)/share
+	cp -r share/flow-omarchy $(DESTDIR)$(PREFIX)/share/
 	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/flow-omarchy/LICENSE
 
-install-omarchy: install
-	for f in omarchy/bin/*; do install -Dm755 "$$f" "$(DESTDIR)$(PREFIX)/bin/$$(basename "$$f")"; done
-
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/flow-omarchy $(DESTDIR)$(PREFIX)/bin/omarchy-*-flow-omarchy
+	rm -f $(addprefix $(DESTDIR)$(PREFIX)/bin/,$(BIN))
 	rm -rf $(DESTDIR)$(PREFIX)/share/flow-omarchy $(DESTDIR)$(PREFIX)/share/licenses/flow-omarchy
 
 check:

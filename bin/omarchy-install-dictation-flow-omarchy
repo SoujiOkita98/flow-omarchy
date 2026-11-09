@@ -15,7 +15,7 @@ text() {
 
 if omarchy-cmd-missing flow-omarchy; then
   if gum confirm --affirmative "$(omarchy-i18n common.yes)" --negative "$(omarchy-i18n common.no)" "$(text dictation.installFlow "Install Flow for Omarchy? It uses a cloud provider (a free Groq API key).")"; then
-    omarchy-pkg-add wtype flow-omarchy
+    omarchy-pkg-add flow-omarchy
   else
     exit 0
   fi

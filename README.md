@@ -1,120 +1,108 @@
 # Flow for Omarchy
 
-AI dictation for [Omarchy](https://omarchy.org) and other Wayland desktops.
-Hold a key and talk. Flow transcribes your speech, cleans it up (removes
-filler words, applies self-corrections like "Thursday, no actually Wednesday",
-and fixes punctuation and the spelling of names) and pastes the result into the
-focused window.
+Small, agent-first AI dictation for [Omarchy](https://omarchy.org). Press a key,
+talk, press again, and clean text appears where your cursor is. It works in any
+language and keeps mixed languages as you spoke them.
+
+> **Based on [FreeFlow](https://github.com/zachlatta/freeflow) by Zach Latta.**
+> Same pipeline, same cleanup prompt, rebuilt for Linux.
 
 ## Why this exists
 
-I use [FreeFlow](https://github.com/zachlatta/freeflow) by Zach Latta on my
-Mac and love it. When I moved to [Omarchy](https://omarchy.org) I missed it.
-FreeFlow is a native macOS app, and its author has chosen to keep it Mac-only
+I built this for myself. I use [FreeFlow](https://github.com/zachlatta/freeflow)
+on my Mac and love it, and when I moved to Omarchy I wanted the same thing.
+FreeFlow is a native macOS app and its author has chosen to keep it Mac-only
 ([#22](https://github.com/zachlatta/freeflow/issues/22)), which is a fair
 choice for a free project. So I rebuilt the parts I use as a small script for
-my own Omarchy setup, and I'm sharing it in case it helps other Omarchy users.
+my own setup, and I'm sharing it in case it helps other Omarchy users.
 
 **All credit goes to Zach Latta and FreeFlow's contributors.** The idea, the
 pipeline design and the cleanup prompt are theirs, used under FreeFlow's MIT
-license. This is an independent project. It is not affiliated with or endorsed
-by FreeFlow, so please report problems here, not to FreeFlow. If you're on a
-Mac, use [FreeFlow](https://github.com/zachlatta/freeflow) itself.
+license. This is an independent project, not affiliated with or endorsed by
+FreeFlow, so please report problems here. On a Mac, use FreeFlow itself.
 
-## How it works
+## Design
 
-It follows the same pipeline as FreeFlow on macOS:
+- **Agent-first.** Setup is meant to be done by your AI agent (Claude Code,
+  Codex, …). [`AGENTS.md`](AGENTS.md) tells it exactly what to do, and
+  `flow-omarchy doctor` tells it whether everything works.
+- **Minimal UI.** A small pill at the bottom of the screen shows a live
+  waveform while you talk, then "Transcribing". It follows your Omarchy theme
+  and never takes focus. Settings live in one text file.
+- **Small.** One bash script and one shell plugin. Nothing runs while you are
+  not dictating.
 
-1. Record the microphone with PipeWire (`pw-record`).
-2. Transcribe with Whisper large v3 on Groq (any OpenAI-compatible provider works).
-3. Clean up with `openai/gpt-oss-20b`, falling back to `qwen/qwen3.8-27b`.
-4. Paste through the clipboard, then restore what was on the clipboard before.
+## Setup
 
-There is no Flow server. Audio and text go only to the provider you configure.
+### With your AI agent (recommended)
 
-## Install on Omarchy
+Get a free API key at [console.groq.com/keys](https://console.groq.com/keys)
+and copy it. Then tell your agent:
 
-```bash
-git clone https://github.com/SoujiOkita98/flow-omarchy
-cd flow-omarchy
-make install-omarchy PREFIX=~/.local
-omarchy-install-dictation-flow-omarchy
-```
+> Set up Flow for Omarchy for me by following
+> https://github.com/SoujiOkita98/flow-omarchy/blob/main/AGENTS.md.
+> My Groq API key is on the clipboard.
 
-The last step asks for a free [Groq API key](https://console.groq.com/keys) and
-makes Flow your dictation backend. Then:
-
-- hold **Right Alt** to talk (push-to-talk), or
-- press **Alt + Space** to start and again to stop.
-
-While you talk, a small pill at the bottom of the screen shows a live
-waveform of your voice and a timer, then "Transcribing" until the text is
-pasted. It is an Omarchy shell plugin (`omarchy/plugin`), follows your theme,
-and never takes focus from the window you are typing into.
-
-To go back to Voxtype: `omarchy-dictation-use voxtype && omarchy-restart-hyprctl`.
-
-This is an early version (0.1). It covers dictation and cleanup; FreeFlow's Edit
-Mode and history are not ported yet.
-
-## Other Wayland desktops
+### By hand
 
 ```bash
+git clone https://github.com/SoujiOkita98/flow-omarchy ~/.local/src/flow-omarchy
+cd ~/.local/src/flow-omarchy
 make install PREFIX=~/.local
-flow-omarchy setup
+omarchy-install-dictation-flow-omarchy   # asks for the API key
+flow-omarchy doctor                      # every line should say ok
 ```
 
-Bind `flow-omarchy toggle` (or `flow-omarchy start` on press and `flow-omarchy stop` on release)
-to a key in your compositor. Pasting into the focused window and window context
-use `hyprctl`; elsewhere set `FLOW_OUTPUT="type"` (needs `wtype`) or
-`"clipboard"`.
+## Use
 
-## Commands
+- **Alt + Space**: press to start, press again to stop.
+- **Right Alt**: hold to talk (Omarchy's default; your agent can make it a tap toggle).
 
-| Command | What it does |
-| --- | --- |
-| `flow-omarchy start` / `stop` / `toggle` | Record, then transcribe, clean up and paste |
-| `flow-omarchy cancel` | Stop and discard the recording |
-| `flow-omarchy status` | `idle`, `recording` or `processing` |
-| `flow-omarchy setup` | Save an API key and check it works |
-| `flow-omarchy config` | Edit settings |
-| `flow-omarchy paste-again` | Paste the last result again |
+Everything you say is transcribed, cleaned up (filler words removed,
+"Thursday, no actually Wednesday" becomes "Wednesday", punctuation fixed) and
+pasted into the focused window. `flow-omarchy paste-again` pastes the last
+result again.
 
 ## Settings
 
-`~/.config/flow-omarchy/config` (created by `flow-omarchy setup`, mode 600):
+`~/.config/flow-omarchy/config` (`flow-omarchy config` opens it):
 
 | Setting | Default | |
 | --- | --- | --- |
-| `FLOW_API_KEY` | `$GROQ_API_KEY` | Provider API key |
-| `FLOW_API_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible base URL (Ollama, LM Studio, …) |
-| `FLOW_TRANSCRIPTION_URL` | API URL | Separate transcription endpoint |
+| `FLOW_API_KEY` | | Provider API key |
+| `FLOW_API_URL` | Groq | Any OpenAI-compatible API (Ollama, LM Studio, …) |
 | `FLOW_TRANSCRIPTION_MODEL` | `whisper-large-v3` | |
-| `FLOW_MODEL` / `FLOW_FALLBACK_MODEL` | `openai/gpt-oss-20b` / `qwen/qwen3.8-27b` | Cleanup models |
-| `FLOW_CLEANUP` | `1` | `0` pastes the raw transcript |
-| `FLOW_OVERLAY` | `1` | Show progress in the Omarchy shell pill; `0` uses desktop notifications |
+| `FLOW_MODEL` | `openai/gpt-oss-20b` | Cleanup model; falls back to `FLOW_FALLBACK_MODEL` |
+| `FLOW_CLEANUP` | `1` | `0` pastes exactly what was transcribed |
+| `FLOW_LANGUAGE` | auto | Main language code, e.g. `zh`, `de` |
+| `FLOW_OUTPUT_LANGUAGE` | | Translate everything into this language, e.g. `English` |
 | `FLOW_CONTEXT` | `1` | Send the focused app's name and window title as a spelling hint |
-| `FLOW_LANGUAGE` | auto | Dictation language code, e.g. `de`, `zh`; empty auto-detects and keeps mixed languages |
-| `FLOW_OUTPUT_LANGUAGE` | none | Translate the result into this language, e.g. `English` |
-| `FLOW_OUTPUT` | `paste` | `paste`, `type` (wtype), `clipboard` or `stdout` |
-| `FLOW_TIMEOUT` | `20` | Seconds per provider request; raise it for local models |
+| `FLOW_OUTPUT` | `paste` | `paste`, `clipboard` or `stdout` |
+| `FLOW_TIMEOUT` | `20` | Seconds per request; raise for local models |
 
-- `~/.config/flow-omarchy/vocabulary`: names and terms to spell exactly, one per line.
-- `~/.config/flow-omarchy/prompt.txt`: replaces the cleanup prompt.
+Names and terms to always spell right go in `~/.config/flow-omarchy/vocabulary`,
+one per line. `~/.config/flow-omarchy/prompt.txt` replaces the cleanup prompt.
 
-## Differences from FreeFlow on macOS
+## Privacy
 
-Context comes from the focused window's app name and title, not a screenshot
-summary. Not yet ported: Edit Mode (transforming selected text), the settings
-window, pipeline history and the realtime transcription mode.
+There is no Flow server. Audio, the transcript and the focused window's name
+and title go only to the provider you configure (Groq by default). The last
+result is kept in `~/.local/state/flow-omarchy/last.txt`.
 
-## Development
+## Not ported (yet)
+
+From FreeFlow: Edit Mode (rewriting selected text by voice), history,
+screenshot-based context, the settings window and realtime transcription.
+
+## Uninstall
 
 ```bash
-make check   # runs the pipeline against a local mock provider: no mic, network or key
+omarchy-remove-dictation-flow-omarchy
+make uninstall PREFIX=~/.local
 ```
 
 ## License
 
-MIT. The cleanup prompt in `share/prompts/cleanup.txt` is copied verbatim from
-FreeFlow ([`Sources/PostProcessingService.swift`](https://github.com/zachlatta/freeflow/blob/3778646/Sources/PostProcessingService.swift)).
+MIT. See [LICENSE](LICENSE). The cleanup prompt in
+`share/flow-omarchy/prompts/cleanup.txt` is copied verbatim from FreeFlow
+([`Sources/PostProcessingService.swift`](https://github.com/zachlatta/freeflow/blob/3778646/Sources/PostProcessingService.swift)).
