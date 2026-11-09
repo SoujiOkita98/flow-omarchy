@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.soujiokita98.flow-omarchy",
+  "name": "Flow for Omarchy",
+  "version": "0.4.0",
+  "description": "Small, agent-first AI dictation based on FreeFlow by Zach Latta. Press a key, talk, and clean text is pasted where your cursor is. Shows a minimal recording pill with a live waveform.",
+  "kinds": [
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "Overlay.qml"
+  }
+}

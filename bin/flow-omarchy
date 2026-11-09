@@ -11,16 +11,16 @@
 
 set -o pipefail
 
-VERSION="0.3.0"
+VERSION="0.4.0"
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}/flow-omarchy"
 state_home="${XDG_STATE_HOME:-$HOME/.local/state}/flow-omarchy"
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp/flow-omarchy-$UID}/flow-omarchy"
 config_file="$config_home/config"
 
-# The repo has the same layout as an install: bin/ next to share/flow-omarchy/.
+# Runs from its repo (also the Omarchy shell plugin): bin/, prompts/, manifest.json.
 self=$(readlink -f "${BASH_SOURCE[0]}")
-share_dir="$(dirname "$(dirname "$self")")/share/flow-omarchy"
+root=$(dirname "$(dirname "$self")")
 
 usage() {
   cat <<EOF
@@ -80,7 +80,7 @@ load_config() {
 
 # ---------------------------------------------------------------- feedback
 
-# Shows progress in the Omarchy shell pill (share/flow-omarchy/omarchy-plugin),
+# Shows progress in the Omarchy shell pill (Overlay.qml),
 # or as one desktop notification that each state replaces.
 ui() {
   local state=$1 message=${2:-} method=$1
@@ -257,7 +257,7 @@ system_prompt() {
   if [[ -s $config_home/prompt.txt ]]; then
     prompt=$(< "$config_home/prompt.txt")
   else
-    prompt=$(< "$share_dir/prompts/cleanup.txt")
+    prompt=$(< "$root/prompts/cleanup.txt")
   fi
 
   # Same wording as FreeFlow's applyOutputLanguage / applyDictationLanguage.
@@ -602,7 +602,7 @@ case "${1:-}" in
   config) edit_config ;;
   paste-again) paste_again ;;
   doctor) doctor ;;
-  plugin-path) echo "$share_dir/omarchy-plugin" ;;
+  root) echo "$root" ;;
   version | --version) echo "flow-omarchy $VERSION" ;;
   _process) process "$2" ;;
   help | -h | --help | "") usage ;;

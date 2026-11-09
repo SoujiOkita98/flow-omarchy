@@ -14,15 +14,14 @@ If something fails on their setup, say so plainly rather than guessing.
 1. **Check first.** If `command -v flow-omarchy && flow-omarchy doctor` prints
    only `ok` lines, Flow is already set up: stop and tell the user.
 
-2. **Install** (no sudo needed):
+2. **Install** with Omarchy's plugin manager (no sudo needed):
 
    ```bash
-   git clone https://github.com/SoujiOkita98/flow-omarchy ~/.local/src/flow-omarchy
-   make -C ~/.local/src/flow-omarchy install PREFIX=~/.local
+   omarchy plugin add https://github.com/SoujiOkita98/flow-omarchy --yes
    ```
 
-   `~/.local/bin` is on Omarchy's default PATH. If a clone already exists,
-   `git -C ~/.local/src/flow-omarchy pull` before installing.
+   The repo lands in `~/.config/omarchy/plugins/io.github.soujiokita98.flow-omarchy`. If it is already
+   there, run `omarchy plugin update io.github.soujiokita98.flow-omarchy --yes` instead.
 
 3. **API key.** The user must create it themselves (free) at
    https://console.groq.com/keys and copy it to the clipboard. Never ask them
@@ -30,27 +29,20 @@ If something fails on their setup, say so plainly rather than guessing.
    it straight from the clipboard, then clear the clipboard:
 
    ```bash
-   wl-paste -n | flow-omarchy setup && wl-copy --clear
+   wl-paste -n | ~/.config/omarchy/plugins/io.github.soujiokita98.flow-omarchy/bin/omarchy-install-dictation-flow-omarchy && wl-copy --clear
    ```
 
-   `setup` prints `API key works` on success. The key is stored in
-   `~/.config/flow-omarchy/config` with mode 600.
+   This one command saves and tests the key (`API key works`), puts
+   `flow-omarchy` on PATH, turns on the recording pill and makes Flow
+   Omarchy's dictation backend (stopping the previous one, e.g. Voxtype).
+   The key is stored in `~/.config/flow-omarchy/config` with mode 600.
+   Re-running it with empty input keeps the saved key. Don't uninstall the
+   user's previous dictation tool unless they ask.
 
-4. **Make Flow Omarchy's dictation backend.** This links the recording pill
-   into the Omarchy shell, switches the backend (stopping the previous one,
-   e.g. Voxtype) and reloads the key bindings:
-
-   ```bash
-   omarchy-install-dictation-flow-omarchy </dev/null
-   ```
-
-   It keeps the key saved in step 3. Don't uninstall the user's previous
-   dictation tool unless they ask.
-
-5. **Verify** with `flow-omarchy doctor`. Every line must say `ok`; a `fix`
+4. **Verify** with `flow-omarchy doctor`. Every line must say `ok`; a `fix`
    line says what to do.
 
-6. **Hand over.** Tell the user: press **Alt + Space** to start and again to
+5. **Hand over.** Tell the user: press **Alt + Space** to start and again to
    stop, or hold **Right Alt** to talk. A small pill at the bottom of the
    screen shows the waveform, then "Transcribing", then the text is pasted.
    Ask them to try it once and say whether the text appeared.
@@ -77,8 +69,8 @@ If something fails on their setup, say so plainly rather than guessing.
 - **Text didn't appear:** run `flow-omarchy doctor`, then
   `flow-omarchy paste-again`. The last result is in
   `~/.local/state/flow-omarchy/last.txt`.
-- **Uninstall:** `omarchy-remove-dictation-flow-omarchy`, then
-  `make -C ~/.local/src/flow-omarchy uninstall PREFIX=~/.local`.
+- **Uninstall:** `omarchy-remove-dictation-flow-omarchy` (removes Flow, its
+  settings including the key, and the plugin).
 
 Config changes apply on the next dictation. Never edit `/usr/share/omarchy/`.
 
@@ -86,12 +78,12 @@ Config changes apply on the next dictation. Never edit `/usr/share/omarchy/`.
 
 - `bin/flow-omarchy` is the whole program (bash). `bin/omarchy-*` are the
   Omarchy dictation backend adapter, installer and remover.
-- `share/flow-omarchy/omarchy-plugin/` is the Omarchy shell plugin
-  (`flow.overlay`, IPC target `flow`: `recording`, `processing`, `info`,
+- The repo root is the Omarchy shell plugin (`manifest.json`, `Overlay.qml`,
+  `i18n/`; id `io.github.soujiokita98.flow-omarchy`, IPC target `flow`: `recording`, `processing`, `info`,
   `error`, `hide`). Edits reach a running shell only after
   `omarchy restart shell` when the plugin directory is a symlink.
-- `share/flow-omarchy/prompts/cleanup.txt` is FreeFlow's prompt, verbatim.
+- `prompts/cleanup.txt` is FreeFlow's prompt, verbatim.
   Don't edit it; extend the prompt in `system_prompt()` instead.
 - Run `make check` (tests against a local mock provider: no mic, network or
-  key) and `shellcheck bin/*` before committing.
+  key; validates the manifest) and `shellcheck bin/*` before committing.
 - Keep it small: no daemons, no new dependencies, minimal UI.

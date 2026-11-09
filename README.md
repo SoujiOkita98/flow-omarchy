@@ -34,8 +34,8 @@ FreeFlow, so please report problems here. On a Mac, use FreeFlow itself.
 - **Minimal UI.** A small pill at the bottom of the screen shows a live
   waveform while you talk, then "Transcribing". It follows your Omarchy theme
   and never takes focus. Settings live in one text file.
-- **Small.** One bash script and one shell plugin. Nothing runs while you are
-  not dictating.
+- **Small.** One bash script and one Omarchy shell plugin, installed with
+  Omarchy's own `omarchy plugin add`. Nothing runs while you are not dictating.
 
 ## Setup
 
@@ -51,12 +51,14 @@ and copy it. Then tell your agent:
 ### By hand
 
 ```bash
-git clone https://github.com/SoujiOkita98/flow-omarchy ~/.local/src/flow-omarchy
-cd ~/.local/src/flow-omarchy
-make install PREFIX=~/.local
-omarchy-install-dictation-flow-omarchy   # asks for the API key
-flow-omarchy doctor                      # every line should say ok
+omarchy plugin add https://github.com/SoujiOkita98/flow-omarchy
+~/.config/omarchy/plugins/io.github.soujiokita98.flow-omarchy/bin/omarchy-install-dictation-flow-omarchy
+flow-omarchy doctor   # every line should say ok
 ```
+
+The second line asks for the API key, puts the `flow-omarchy` command on your
+PATH, turns on the recording pill and makes Flow Omarchy's dictation tool.
+Update later with `omarchy plugin update io.github.soujiokita98.flow-omarchy`.
 
 ## Use
 
@@ -103,11 +105,12 @@ screenshot-based context, the settings window and realtime transcription.
 
 ```bash
 omarchy-remove-dictation-flow-omarchy
-make uninstall PREFIX=~/.local
 ```
+
+This removes Flow, its settings (including the API key) and the plugin.
 
 ## License
 
 MIT. See [LICENSE](LICENSE). The cleanup prompt in
-`share/flow-omarchy/prompts/cleanup.txt` is copied verbatim from FreeFlow
+`prompts/cleanup.txt` is copied verbatim from FreeFlow
 ([`Sources/PostProcessingService.swift`](https://github.com/zachlatta/freeflow/blob/3778646/Sources/PostProcessingService.swift)).

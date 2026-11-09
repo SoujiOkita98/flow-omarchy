@@ -1,29 +1,38 @@
 #!/bin/bash
 
 # omarchy:summary=Remove Flow for Omarchy dictation and its configuration
-# omarchy:requires-sudo=true
 
 set -e
 
-if omarchy-cmd-present flow-omarchy; then
-  echo "Uninstall Flow for Omarchy to remove dictation."
+root=$(dirname "$(dirname "$(readlink -f "$0")")")
+plugin_id=$(jq -r .id "$root/manifest.json")
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+plugins_dir="$config_home/omarchy/plugins"
 
-  flow-omarchy cancel >/dev/null 2>&1 || true
-  omarchy-shell -q shell setPluginEnabled flow.overlay false
-  plugin_link="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins/flow-overlay"
-  if [[ -L $plugin_link ]]; then
-    unlink "$plugin_link"
+"$root/bin/flow-omarchy" cancel >/dev/null 2>&1 || true
+omarchy-plugin-disable "$plugin_id" >/dev/null 2>&1 || true
+
+# Remove only the links the installer made.
+for file in "$root"/bin/*; do
+  link="$HOME/.local/bin/${file##*/}"
+  if [[ -L $link && $(readlink "$link") == "$file" ]]; then
+    unlink "$link"
   fi
-  omarchy-shell -q shell rescanPlugins
-  omarchy-pkg-drop flow-omarchy
-  # The config holds the provider API key, so don't leave it behind.
-  rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/flow-omarchy"
-  rm -rf "${XDG_STATE_HOME:-$HOME/.local/state}/flow-omarchy"
-  backend_config="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/defaults/dictation"
-  if [[ -f $backend_config && $(< "$backend_config") == "flow-omarchy" ]]; then
-    rm "$backend_config"
-  fi
-  omarchy-restart-hyprctl
-else
-  echo "Flow for Omarchy was not installed."
+done
+if [[ -L $plugins_dir/$plugin_id ]]; then
+  unlink "$plugins_dir/$plugin_id"
 fi
+
+# The config holds the provider API key, so don't leave it behind.
+rm -rf "$config_home/flow-omarchy" "${XDG_STATE_HOME:-$HOME/.local/state}/flow-omarchy"
+backend_config="$config_home/omarchy/defaults/dictation"
+if [[ -f $backend_config && $(< "$backend_config") == "flow-omarchy" ]]; then
+  rm "$backend_config"
+fi
+omarchy-restart-hyprctl
+
+# Last, delete the plugin itself when `omarchy plugin add` installed it.
+if [[ $root == "$plugins_dir"/* ]]; then
+  omarchy-plugin-remove "$plugin_id" --yes
+fi
+echo "Flow for Omarchy removed."
